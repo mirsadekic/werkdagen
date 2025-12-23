@@ -7,25 +7,33 @@
 
   <link rel="manifest" href="manifest.webmanifest">
   <meta name="theme-color" content="#0a84ff" />
-
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <header class="header">
     <div class="title">
-      <h1>Werkdagen</h1>
-      <p>Invoer + automatisch tegoed</p>
+      <h1 id="appTitle">Werkdagen</h1>
+      <p id="appSubtitle">Invoer + automatisch tegoed</p>
     </div>
   </header>
 
   <main class="container">
     <!-- Instellingen -->
     <section class="card">
-      <h2>Instellingen</h2>
+      <h2 id="settingsTitle">Instellingen</h2>
 
       <div class="grid grid-2">
         <label>
-          Berekenen op basis van
+          <span id="langLabel">Taal</span>
+          <select id="language">
+            <option value="nl">Nederlands</option>
+            <option value="tr">Türkçe</option>
+            <option value="en">English</option>
+          </select>
+        </label>
+
+        <label>
+          <span id="rateModeLabel">Berekenen op basis van</span>
           <select id="rateMode">
             <option value="day">Dagloon</option>
             <option value="hour">Uurloon</option>
@@ -33,13 +41,13 @@
         </label>
 
         <label id="dayRateWrap">
-          Dagloon (€)
-          <input id="dayRate" type="number" step="0.01" min="0" placeholder="bijv. 120" />
+          <span id="dayRateLabel">Dagloon (€)</span>
+          <input id="dayRate" type="number" step="0.01" min="0" placeholder="120" />
         </label>
 
         <label id="hourRateWrap">
-          Uurloon (€)
-          <input id="hourRate" type="number" step="0.01" min="0" placeholder="bijv. 15" />
+          <span id="hourRateLabel">Uurloon (€)</span>
+          <input id="hourRate" type="number" step="0.01" min="0" placeholder="15" />
         </label>
       </div>
 
@@ -48,23 +56,25 @@
         <button id="resetAll" class="danger">Alles wissen</button>
       </div>
 
-      <p class="hint">Alles wordt lokaal opgeslagen op je iPhone (geen cloud). Maak af en toe een JSON back-up.</p>
+      <p class="hint" id="settingsHint">
+        Alles wordt lokaal opgeslagen op je iPhone (geen cloud). Maak af en toe een JSON back-up.
+      </p>
     </section>
 
     <!-- Overzicht -->
     <section class="card">
-      <h2>Overzicht</h2>
+      <h2 id="summaryTitle">Overzicht</h2>
       <div class="stats">
         <div class="stat">
-          <div class="label">Verdiend</div>
+          <div class="label" id="earnedLabel">Verdiend</div>
           <div class="value" id="earnedTotal">€ 0,00</div>
         </div>
         <div class="stat">
-          <div class="label">Ontvangen</div>
+          <div class="label" id="paidLabel">Ontvangen</div>
           <div class="value" id="paidTotal">€ 0,00</div>
         </div>
         <div class="stat highlight">
-          <div class="label">Nog tegoed</div>
+          <div class="label" id="dueLabel">Nog tegoed</div>
           <div class="value" id="dueTotal">€ 0,00</div>
         </div>
       </div>
@@ -72,29 +82,29 @@
 
     <!-- Werkdag toevoegen -->
     <section class="card">
-      <h2>Werkdag toevoegen</h2>
+      <h2 id="addWorkdayTitle">Werkdag toevoegen</h2>
 
       <div class="grid grid-2">
         <label>
-          Datum
+          <span id="workDateLabel">Datum</span>
           <input id="workDate" type="date" />
         </label>
 
         <label id="shiftWrap">
-          Dienst (bij dagloon)
+          <span id="shiftLabel">Dienst (bij dagloon)</span>
           <select id="shiftType">
-            <option value="full">Hele dienst</option>
-            <option value="half">Halve dienst</option>
+            <option value="full" id="shiftFull">Hele dienst</option>
+            <option value="half" id="shiftHalf">Halve dienst</option>
           </select>
         </label>
 
         <label>
-          Begin
+          <span id="startLabel">Begin</span>
           <input id="startTime" type="time" value="13:00" />
         </label>
 
         <label>
-          Eind
+          <span id="endLabel">Eind</span>
           <input id="endTime" type="time" value="01:00" />
         </label>
       </div>
@@ -104,16 +114,9 @@
       </div>
 
       <div class="table-wrap">
-        <table id="workdaysTable">
+        <table>
           <thead>
-            <tr id="workdaysHeaderRow">
-              <th>Datum</th>
-              <th>Dienst</th>
-              <th>Begin</th>
-              <th>Eind</th>
-              <th>Verdiend</th>
-              <th></th>
-            </tr>
+            <tr id="workdaysHeaderRow"></tr>
           </thead>
           <tbody id="workdaysBody"></tbody>
         </table>
@@ -122,17 +125,17 @@
 
     <!-- Betaling toevoegen -->
     <section class="card">
-      <h2>Betaling toevoegen</h2>
+      <h2 id="addPaymentTitle">Betaling toevoegen</h2>
 
       <div class="grid grid-2">
         <label>
-          Datum
+          <span id="payDateLabel">Datum</span>
           <input id="payDate" type="date" />
         </label>
 
         <label>
-          Bedrag (€)
-          <input id="payAmount" type="number" step="0.01" min="0" placeholder="bijv. 100" />
+          <span id="payAmountLabel">Bedrag (€)</span>
+          <input id="payAmount" type="number" step="0.01" min="0" placeholder="100" />
         </label>
       </div>
 
@@ -143,11 +146,7 @@
       <div class="table-wrap">
         <table>
           <thead>
-            <tr>
-              <th>Datum</th>
-              <th>Bedrag</th>
-              <th></th>
-            </tr>
+            <tr id="paymentsHeaderRow"></tr>
           </thead>
           <tbody id="paymentsBody"></tbody>
         </table>
@@ -156,19 +155,19 @@
 
     <!-- Export / Import -->
     <section class="card">
-      <h2>Export / Import</h2>
+      <h2 id="exportTitle">Export / Import</h2>
 
       <div class="row">
         <button id="exportData">Export (JSON)</button>
         <button id="exportPdf">Export (PDF)</button>
 
         <label class="file">
-          Import (JSON)
+          <span id="importLabel">Import (JSON)</span>
           <input id="importData" type="file" accept="application/json" />
         </label>
       </div>
 
-      <p class="hint">
+      <p class="hint" id="exportHint">
         PDF export: iPhone toont “Print”. Open de preview (pinch/zoom) → Deel → “Bewaar in Bestanden”.
       </p>
     </section>
