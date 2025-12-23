@@ -19,21 +19,39 @@
   </header>
 
   <main class="container">
+    <!-- Instellingen -->
     <section class="card">
       <h2>Instellingen</h2>
-      <div class="grid">
+
+      <div class="grid grid-2">
         <label>
+          Berekenen op basis van
+          <select id="rateMode">
+            <option value="day">Dagloon</option>
+            <option value="hour">Uurloon</option>
+          </select>
+        </label>
+
+        <label id="dayRateWrap">
           Dagloon (€)
           <input id="dayRate" type="number" step="0.01" min="0" placeholder="bijv. 120" />
         </label>
+
+        <label id="hourRateWrap">
+          Uurloon (€)
+          <input id="hourRate" type="number" step="0.01" min="0" placeholder="bijv. 15" />
+        </label>
       </div>
+
       <div class="row">
         <button id="saveSettings" class="primary">Opslaan</button>
         <button id="resetAll" class="danger">Alles wissen</button>
       </div>
+
       <p class="hint">Alles wordt lokaal op je iPhone opgeslagen (niet in de cloud).</p>
     </section>
 
+    <!-- Overzicht -->
     <section class="card">
       <h2>Overzicht</h2>
       <div class="stats">
@@ -52,6 +70,7 @@
       </div>
     </section>
 
+    <!-- Werkdag toevoegen -->
     <section class="card">
       <h2>Werkdag toevoegen</h2>
       <div class="grid grid-2">
@@ -59,22 +78,26 @@
           Datum
           <input id="workDate" type="date" />
         </label>
+
         <label>
-          Dienst
+          Dienst (bij Dagloon)
           <select id="shiftType">
             <option value="full">Hele dienst</option>
             <option value="half">Halve dienst</option>
           </select>
         </label>
+
         <label>
           Begin
           <input id="startTime" type="time" value="13:00" />
         </label>
+
         <label>
           Eind
           <input id="endTime" type="time" value="01:00" />
         </label>
       </div>
+
       <div class="row">
         <button id="addWorkday" class="primary">Toevoegen</button>
       </div>
@@ -96,6 +119,7 @@
       </div>
     </section>
 
+    <!-- Betaling toevoegen -->
     <section class="card">
       <h2>Betaling toevoegen</h2>
       <div class="grid grid-2">
@@ -108,6 +132,7 @@
           <input id="payAmount" type="number" step="0.01" min="0" placeholder="bijv. 100" />
         </label>
       </div>
+
       <div class="row">
         <button id="addPayment" class="primary">Toevoegen</button>
       </div>
@@ -126,6 +151,7 @@
       </div>
     </section>
 
+    <!-- Back-up -->
     <section class="card">
       <h2>Back-up</h2>
       <div class="row">
@@ -147,3 +173,5 @@
   </script>
 </body>
 </html>
+
+
