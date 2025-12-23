@@ -15,9 +15,7 @@ body{
   background: linear-gradient(180deg,#070a12, var(--bg));
   color:var(--text);
 }
-.header{
-  padding:24px 18px 10px;
-}
+.header{ padding:24px 18px 10px; }
 .container{
   padding: 0 14px 40px;
   max-width: 900px;
@@ -38,10 +36,15 @@ p{margin:8px 0;color:var(--muted)}
 
 .grid{display:grid;gap:10px}
 .grid-2{grid-template-columns: 1fr 1fr}
-@media (max-width:700px){
-  .grid-2{grid-template-columns: 1fr}
+@media (max-width:700px){ .grid-2{grid-template-columns: 1fr} }
+
+label{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  font-size:14px;
+  color:var(--muted)
 }
-label{display:flex;flex-direction:column;gap:6px;font-size:14px;color:var(--muted)}
 input, select{
   border:1px solid var(--border);
   background:#0d1324;
@@ -50,6 +53,7 @@ input, select{
   border-radius: 12px;
   font-size: 16px;
 }
+
 .row{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
 
 button{
@@ -78,9 +82,7 @@ button.danger{
   grid-template-columns: repeat(3,1fr);
   gap:10px;
 }
-@media (max-width:700px){
-  .stats{grid-template-columns:1fr}
-}
+@media (max-width:700px){ .stats{grid-template-columns:1fr} }
 .stat{
   border:1px solid var(--border);
   border-radius: 14px;
@@ -106,10 +108,9 @@ th, td{
 }
 th{color:var(--muted);font-weight:700;background: rgba(13,19,36,.6)}
 tr:last-child td{border-bottom:none}
-.small-btn{
-  padding:6px 10px;
-  border-radius:10px;
-}
+
+.small-btn{ padding:6px 10px; border-radius:10px; }
+
 .file{
   display:inline-flex;
   align-items:center;
@@ -122,3 +123,19 @@ tr:last-child td{border-bottom:none}
   cursor:pointer;
 }
 .file input{display:none}
+
+/* PRINT -> PDF */
+@media print {
+  body { background: white !important; color: black !important; }
+  .header { padding: 0 !important; }
+  .container { max-width: 100% !important; padding: 0 !important; }
+  .card { border: none !important; background: white !important; box-shadow: none !important; margin: 0 0 16px 0 !important; padding: 0 !important; }
+  .hint { display:none !important; }
+
+  /* verberg alle knoppen/inputs bij afdruk */
+  button, input, select, label.file { display:none !important; }
+
+  .table-wrap { overflow: visible !important; border:none !important; }
+  table { min-width: 0 !important; }
+  th { color: #333 !important; background: #f2f2f2 !important; }
+}
