@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Werkdagen</title>
+
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#0a84ff" />
+
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="header">
+    <div class="title">
+      <h1>Werkdagen</h1>
+      <p>Invoer + automatisch tegoed</p>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="card">
+      <h2>Instellingen</h2>
+      <div class="grid">
+        <label>
+          Dagloon (€)
+          <input id="dayRate" type="number" step="0.01" min="0" placeholder="bijv. 120" />
+        </label>
+      </div>
+      <div class="row">
+        <button id="saveSettings" class="primary">Opslaan</button>
+        <button id="resetAll" class="danger">Alles wissen</button>
+      </div>
+      <p class="hint">Alles wordt lokaal op je iPhone opgeslagen (niet in de cloud).</p>
+    </section>
+
+    <section class="card">
+      <h2>Overzicht</h2>
+      <div class="stats">
+        <div class="stat">
+          <div class="label">Verdiend</div>
+          <div class="value" id="earnedTotal">€ 0,00</div>
+        </div>
+        <div class="stat">
+          <div class="label">Ontvangen</div>
+          <div class="value" id="paidTotal">€ 0,00</div>
+        </div>
+        <div class="stat highlight">
+          <div class="label">Nog tegoed</div>
+          <div class="value" id="dueTotal">€ 0,00</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Werkdag toevoegen</h2>
+      <div class="grid grid-2">
+        <label>
+          Datum
+          <input id="workDate" type="date" />
+        </label>
+        <label>
+          Dienst
+          <select id="shiftType">
+            <option value="full">Hele dienst</option>
+            <option value="half">Halve dienst</option>
+          </select>
+        </label>
+        <label>
+          Begin
+          <input id="startTime" type="time" value="13:00" />
+        </label>
+        <label>
+          Eind
+          <input id="endTime" type="time" value="01:00" />
+        </label>
+      </div>
+      <div class="row">
+        <button id="addWorkday" class="primary">Toevoegen</button>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Datum</th>
+              <th>Dienst</th>
+              <th>Begin</th>
+              <th>Eind</th>
+              <th>Verdiend</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="workdaysBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Betaling toevoegen</h2>
+      <div class="grid grid-2">
+        <label>
+          Datum
+          <input id="payDate" type="date" />
+        </label>
+        <label>
+          Bedrag (€)
+          <input id="payAmount" type="number" step="0.01" min="0" placeholder="bijv. 100" />
+        </label>
+      </div>
+      <div class="row">
+        <button id="addPayment" class="primary">Toevoegen</button>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Datum</th>
+              <th>Bedrag</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="paymentsBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Back-up</h2>
+      <div class="row">
+        <button id="exportData">Export (JSON)</button>
+        <label class="file">
+          Import (JSON)
+          <input id="importData" type="file" accept="application/json" />
+        </label>
+      </div>
+      <p class="hint">Handig als je van telefoon wisselt. (iPhone: bewaar het bestand in Bestanden/iCloud.)</p>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+  <script>
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("./service-worker.js");
+    }
+  </script>
+</body>
+</html>
