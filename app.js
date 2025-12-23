@@ -1,4 +1,4 @@
-const STORAGE_KEY = "werkdagen_pwa_v1";
+const STORAGE_KEY = "werkdagen_pwa_v2";
 
 const el = (id) => document.getElementById(id);
 
@@ -11,21 +11,24 @@ function loadState() {
   const raw = localStorage.getItem(STORAGE_KEY);
   if (!raw) {
     return {
-      settings: { dayRate: 0 },
+      settings: { rateMode: "day", dayRate: 0, hourRate: 0 },
       workdays: [],
       payments: []
     };
   }
   try {
     const s = JSON.parse(raw);
-    // mini-migratie/veiligheid
     return {
-      settings: { dayRate: Number(s?.settings?.dayRate || 0) },
+      settings: {
+        rateMode: (s?.settings?.rateMode === "hour") ? "hour" : "day",
+        dayRate: Number(s?.settings?.dayRate || 0),
+        hourRate: Number(s?.settings?.hourRate || 0)
+      },
       workdays: Array.isArray(s?.workdays) ? s.workdays : [],
-      payments: Array.isArray(s?.payments) ? s.payments : [],
+      payments: Array.isArray(s?.payments) ? s.payments : []
     };
   } catch {
-    return { settings: { dayRate: 0 }, workdays: [], payments: [] };
+    return { settings: { rateMode: "day", dayRate: 0, hourRate: 0 }, workdays: [], payments: [] };
   }
 }
 
@@ -33,77 +36,8 @@ function saveState(state) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 }
 
-function calcEarnedForWorkday(dayRate, shiftType) {
-  const rate = Number(dayRate || 0);
-  if (shiftType === "half") return rate / 2;
-  return rate;
-}
-
 function sortByDateAsc(items, key = "date") {
   return [...items].sort((a, b) => (a[key] || "").localeCompare(b[key] || ""));
-}
-
-function render() {
-  state.workdays = sortByDateAsc(state.workdays, "date");
-  state.payments = sortByDateAsc(state.payments, "date");
-
-  // totals
-  const earnedTotal = state.workdays.reduce((sum, w) => sum + Number(w.earned || 0), 0);
-  const paidTotal = state.payments.reduce((sum, p) => sum + Number(p.amount || 0), 0);
-  const dueTotal = earnedTotal - paidTotal;
-
-  el("earnedTotal").textContent = euro(earnedTotal);
-  el("paidTotal").textContent = euro(paidTotal);
-  el("dueTotal").textContent = euro(dueTotal);
-
-  // settings
-  el("dayRate").value = state.settings.dayRate || "";
-
-  // workdays table
-  const wb = el("workdaysBody");
-  wb.innerHTML = "";
-  for (const w of state.workdays) {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${w.date || ""}</td>
-      <td>${w.shiftType === "half" ? "Halve" : "Hele"}</td>
-      <td>${w.startTime || ""}</td>
-      <td>${w.endTime || ""}</td>
-      <td>${euro(w.earned || 0)}</td>
-      <td><button class="small-btn" data-del-work="${w.id}">Verwijder</button></td>
-    `;
-    wb.appendChild(tr);
-  }
-
-  // payments table
-  const pb = el("paymentsBody");
-  pb.innerHTML = "";
-  for (const p of state.payments) {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${p.date || ""}</td>
-      <td>${euro(p.amount || 0)}</td>
-      <td><button class="small-btn" data-del-pay="${p.id}">Verwijder</button></td>
-    `;
-    pb.appendChild(tr);
-  }
-
-  // attach delete handlers (event delegation)
-  wb.onclick = (e) => {
-    const id = e.target?.getAttribute?.("data-del-work");
-    if (!id) return;
-    state.workdays = state.workdays.filter(w => w.id !== id);
-    saveState(state);
-    render();
-  };
-
-  pb.onclick = (e) => {
-    const id = e.target?.getAttribute?.("data-del-pay");
-    if (!id) return;
-    state.payments = state.payments.filter(p => p.id !== id);
-    saveState(state);
-    render();
-  };
 }
 
 function todayISO() {
@@ -118,105 +52,98 @@ function uid() {
   return Math.random().toString(16).slice(2) + "-" + Date.now().toString(16);
 }
 
-// --- init ---
-let state = loadState();
+/**
+ * Berekent gewerkte uren uit start/eind tijd.
+ * - Werkt ook over middernacht: 13:00 -> 01:00 = 12 uur
+ * - Retourneert decimale uren, afgerond op 2 decimals (bijv. 7.5)
+ */
+function calcHours(startTime, endTime) {
+  if (!startTime || !endTime) return 0;
 
-// default dates
-if (!el("workDate").value) el("workDate").value = todayISO();
-if (!el("payDate").value) el("payDate").value = todayISO();
+  const [sh, sm] = startTime.split(":").map(Number);
+  const [eh, em] = endTime.split(":").map(Number);
+  if (![sh, sm, eh, em].every(n => Number.isFinite(n))) return 0;
 
-el("saveSettings").addEventListener("click", () => {
-  const rate = Number(el("dayRate").value || 0);
-  state.settings.dayRate = isFinite(rate) ? rate : 0;
-  saveState(state);
-  render();
-});
+  const startMin = sh * 60 + sm;
+  const endMin = eh * 60 + em;
 
-el("addWorkday").addEventListener("click", () => {
-  const date = el("workDate").value;
-  const shiftType = el("shiftType").value; // full/half
-  const startTime = el("startTime").value;
-  const endTime = el("endTime").value;
+  let diff = endMin - startMin;
+  if (diff < 0) diff += 24 * 60; // over middernacht
 
-  if (!date) { alert("Kies een datum."); return; }
-  if (!state.settings.dayRate || Number(state.settings.dayRate) <= 0) {
-    alert("Vul eerst je dagloon in bij Instellingen en klik Opslaan.");
-    return;
+  const hours = diff / 60;
+  return Math.round(hours * 100) / 100;
+}
+
+function earnedForWorkday(settings, shiftType, startTime, endTime) {
+  const mode = settings.rateMode;
+
+  if (mode === "hour") {
+    const rate = Number(settings.hourRate || 0);
+    const hours = calcHours(startTime, endTime);
+    return { earned: hours * rate, hours };
   }
 
-  const earned = calcEarnedForWorkday(state.settings.dayRate, shiftType);
+  // dagloon
+  const dayRate = Number(settings.dayRate || 0);
+  const earned = (shiftType === "half") ? (dayRate / 2) : dayRate;
+  return { earned, hours: null };
+}
 
-  state.workdays.push({
-    id: uid(),
-    date,
-    shiftType,
-    startTime,
-    endTime,
-    earned
-  });
+function updateSettingsUI() {
+  const mode = el("rateMode").value;
+  el("dayRateWrap").style.display = (mode === "day") ? "flex" : "none";
+  el("hourRateWrap").style.display = (mode === "hour") ? "flex" : "none";
 
-  saveState(state);
-  render();
-});
+  // bij uurloon is "hele/halve dienst" minder relevant, maar laten we het gewoon staan
+  // (als je wilt kan ik die dropdown verbergen wanneer mode=hour)
+}
 
-el("addPayment").addEventListener("click", () => {
-  const date = el("payDate").value;
-  const amount = Number(el("payAmount").value || 0);
+function render() {
+  state.workdays = sortByDateAsc(state.workdays, "date");
+  state.payments = sortByDateAsc(state.payments, "date");
 
-  if (!date) { alert("Kies een datum."); return; }
-  if (!amount || amount <= 0) { alert("Vul een bedrag in groter dan 0."); return; }
+  const earnedTotal = state.workdays.reduce((sum, w) => sum + Number(w.earned || 0), 0);
+  const paidTotal = state.payments.reduce((sum, p) => sum + Number(p.amount || 0), 0);
+  const dueTotal = earnedTotal - paidTotal;
 
-  state.payments.push({
-    id: uid(),
-    date,
-    amount
-  });
+  el("earnedTotal").textContent = euro(earnedTotal);
+  el("paidTotal").textContent = euro(paidTotal);
+  el("dueTotal").textContent = euro(dueTotal);
 
-  el("payAmount").value = "";
-  saveState(state);
-  render();
-});
+  // settings
+  el("rateMode").value = state.settings.rateMode || "day";
+  el("dayRate").value = state.settings.dayRate || "";
+  el("hourRate").value = state.settings.hourRate || "";
+  updateSettingsUI();
 
-el("resetAll").addEventListener("click", () => {
-  const ok = confirm("Weet je zeker dat je ALLES wilt wissen?");
-  if (!ok) return;
-  localStorage.removeItem(STORAGE_KEY);
-  state = loadState();
-  render();
-});
+  // workdays table (toon extra kolom "Uren" als hour-mode)
+  const showHoursCol = state.settings.rateMode === "hour";
 
-el("exportData").addEventListener("click", () => {
-  const data = JSON.stringify(state, null, 2);
-  const blob = new Blob([data], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "werkdagen-backup.json";
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
-});
+  const wb = el("workdaysBody");
+  wb.innerHTML = "";
 
-el("importData").addEventListener("change", async (e) => {
-  const file = e.target.files?.[0];
-  if (!file) return;
-  try {
-    const text = await file.text();
-    const imported = JSON.parse(text);
-    state = {
-      settings: { dayRate: Number(imported?.settings?.dayRate || 0) },
-      workdays: Array.isArray(imported?.workdays) ? imported.workdays : [],
-      payments: Array.isArray(imported?.payments) ? imported.payments : []
-    };
-    saveState(state);
-    render();
-    alert("Import gelukt.");
-  } catch {
-    alert("Import mislukt. Bestand is geen geldige JSON back-up.");
-  } finally {
-    e.target.value = "";
+  for (const w of state.workdays) {
+    const tr = document.createElement("tr");
+
+    const dienstLabel = (w.rateMode === "hour")
+      ? "Uurloon"
+      : (w.shiftType === "half" ? "Halve" : "Hele");
+
+    const hoursCell = showHoursCol
+      ? `<td>${(w.hours ?? "") === "" ? "" : (Number(w.hours).toFixed(2) + " u")}</td>`
+      : "";
+
+    tr.innerHTML = `
+      <td>${w.date || ""}</td>
+      <td>${dienstLabel}</td>
+      <td>${w.startTime || ""}</td>
+      <td>${w.endTime || ""}</td>
+      ${hoursCell}
+      <td>${euro(w.earned || 0)}</td>
+      <td><button class="small-btn" data-del-work="${w.id}">Verwijder</button></td>
+    `;
+    wb.appendChild(tr);
   }
-});
 
-render();
+  // header aanpassen dynamisch (uren kolom)
+  const th
