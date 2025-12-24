@@ -1,184 +1,427 @@
 <!doctype html>
 <html lang="nl">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Werkdagen</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Bestellijst – Alanya Delfzijl</title>
 
-  <link rel="manifest" href="manifest.webmanifest">
-  <meta name="theme-color" content="#0a84ff" />
-  <link rel="stylesheet" href="styles.css" />
+<meta name="theme-color" content="#0b1220">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Bestellijst">
+
+<!-- iOS homescreen icon -->
+<link rel="apple-touch-icon" sizes="180x180" href="alanya-icon-badge-180.png">
+
+<link rel="manifest" href="manifest.json">
+
+<style>
+:root{
+  --bg:#0b1220;
+  --panel:#111a2e;
+  --text:#e8ecf7;
+  --muted:#aab4d6;
+  --line:rgba(255,255,255,.12);
+  --accent:#5eead4;
+  --danger:#fb7185;
+  --warning:#fbbf24;
+  --ok:#34d399;
+  --radius:18px;
+  --shadow:0 12px 28px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial;
+  background:linear-gradient(180deg,#071022,#0b1220);
+  color:var(--text);
+}
+header{
+  position:sticky; top:0; z-index:10;
+  backdrop-filter:blur(10px);
+  background:rgba(11,18,32,.88);
+  border-bottom:1px solid var(--line);
+}
+.wrap{max-width:1100px;margin:auto;padding:16px}
+h1{margin:0;font-size:20px}
+.sub{font-size:13px;color:var(--muted);margin-top:4px}
+.card{
+  background:rgba(17,26,46,.92);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  margin-top:14px;
+}
+.controls{
+  display:grid;
+  grid-template-columns: 1fr;
+  gap:10px;
+  padding:14px;
+}
+label{font-size:12px;color:var(--muted);display:block;margin-bottom:6px}
+input[type="date"]{
+  width:100%;
+  padding:10px 12px;
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,.15);
+  background:rgba(255,255,255,.06);
+  color:var(--text);
+}
+.btnrow,.pillbar{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  padding:0 14px 14px;
+}
+button{
+  padding:10px 14px;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.18);
+  background:rgba(255,255,255,.06);
+  color:var(--text);
+  cursor:pointer;
+}
+button.primary{background:rgba(94,234,212,.15);border-color:rgba(94,234,212,.4)}
+button.warning{background:rgba(251,191,36,.15)}
+button.danger{background:rgba(251,113,133,.15)}
+.toggle{display:flex;gap:8px;align-items:center;font-size:13px}
+.toggle input{width:18px;height:18px}
+
+details{
+  margin-top:14px;
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  background:rgba(15,23,48,.88);
+  overflow:hidden;
+}
+summary{
+  padding:12px 14px;
+  cursor:pointer;
+  font-weight:650;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+summary::-webkit-details-marker{display:none}
+.badge{
+  font-size:12px;
+  padding:6px 10px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.2);
+  color:rgba(232,236,247,.9);
+}
+.tableWrap{overflow:auto;border-top:1px solid rgba(255,255,255,.08)}
+table{width:100%;border-collapse:collapse;min-width:520px}
+th,td{padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.08)}
+th{font-size:12px;color:var(--muted);text-align:left;position:sticky;top:0;background:rgba(11,18,32,.92)}
+td.prod{font-weight:600}
+td.qty{width:90px}
+td.unit{width:130px}
+
+input.qtyInput{
+  width:70px;              /* <<< kleiner */
+  padding:6px 8px;         /* <<< compacter */
+  border-radius:10px;
+  border:1px solid rgba(255,255,255,.15);
+  background:rgba(255,255,255,.06);
+  color:var(--text);
+  font-size:14px;
+  text-align:center;
+}
+select.unitSelect{
+  width:120px;
+  padding:6px 8px;
+  border-radius:10px;
+  border:1px solid rgba(255,255,255,.15);
+  background:rgba(255,255,255,.06);
+  color:var(--text);
+  font-size:14px;
+}
+
+.footer{padding:20px;color:var(--muted);font-size:12px}
+</style>
 </head>
+
 <body>
-  <header class="header">
-    <div class="title">
-      <h1 id="appTitle">Werkdagen</h1>
-      <p id="appSubtitle">Invoer + automatisch tegoed</p>
+
+<header>
+  <div class="wrap">
+    <h1>Bestellijst – Alanya Delfzijl</h1>
+    <div class="sub">Mail naar <b>info@kingfood.nl</b> (CSV/Excel formaat)</div>
+
+    <div class="card">
+      <div class="controls">
+        <div>
+          <label>Besteldatum</label>
+          <input type="date" id="orderDate">
+        </div>
+      </div>
+
+      <div class="pillbar">
+        <label class="toggle" title="Toon alleen producten met een ingevuld aantal">
+          <input type="checkbox" id="onlyFilled">
+          Alleen ingevulde items
+        </label>
+
+        <button id="expandAll">Uitklappen alles</button>
+        <button id="collapseAll">Inklappen alles</button>
+      </div>
+
+      <div class="btnrow">
+        <button class="primary" id="sendMail">Versturen via e-mail</button>
+        <button id="copyCsv">Kopieer Excel (CSV)</button>
+        <button class="warning" id="restore">Herstel vorige</button>
+        <button class="danger" id="clear">Alles wissen</button>
+      </div>
     </div>
-  </header>
+  </div>
+</header>
 
-  <main class="container">
-    <!-- Instellingen -->
-    <section class="card">
-      <h2 id="settingsTitle">Instellingen</h2>
+<main class="wrap" id="app"></main>
 
-      <div class="grid grid-2">
-        <label>
-          <span id="langLabel">Taal</span>
-          <select id="language">
-            <option value="nl">Nederlands</option>
-            <option value="tr">Türkçe</option>
-            <option value="en">English</option>
-          </select>
-        </label>
+<div class="footer wrap">
+  iPhone: open in Safari → Deel → <b>Zet op beginscherm</b>
+</div>
 
-        <label>
-          <span id="rateModeLabel">Berekenen op basis van</span>
-          <select id="rateMode">
-            <option value="day">Dagloon</option>
-            <option value="hour">Uurloon</option>
-          </select>
-        </label>
+<script>
+/* === CONFIG === */
+const EMAIL="info@kingfood.nl";
+const SUBJECT_PREFIX="bestelling - Alanya Delfzijl - ";
+const UNITS=["kg","stuk","dozen","zakken","emmers","blikken","tray","kratten","aantal"];
 
-        <label id="dayRateWrap">
-          <span id="dayRateLabel">Dagloon (€)</span>
-          <input id="dayRate" type="number" step="0.01" min="0" placeholder="80" />
-        </label>
+const DATA=[
+{cat:"Vriezer",items:[
+["Aardappelschijfjes","dozen"],["Patat","dozen"],["Lahmacun","dozen"],
+["Mixed fish","zakken"],["Gamba's","zakken"],["Garnalen","zakken"],
+["Parmezaanse kaas","zakken"],["Spek","stuk"],["Mixed groente","zakken"],
+["Falafel","zakken"]]},
+{cat:"Kruiden",items:[
+["Knoflookpoeder","dozen"],["Paprika poeder","zakken"],["Zwarte peper","zakken"],
+["Komijn","zakken"],["Runder bouillon","stuk"],["Peterselie","zakken"],
+["Oregano","zakken"]]},
+{cat:"Deegwaren",items:[
+["Pita brood","dozen"],["Turks brood","dozen"],["Durum","dozen"],["Meel","zakken"]]},
+{cat:"Pasta",items:[
+["Penne","dozen"],["Spaghetti","dozen"],["Tagliatelle","dozen"],
+["Tortellini","dozen"],["Lasagne bladeren","dozen"]]},
+{cat:"Sauzen",items:[
+["Fritessaus","emmers"],["Ketchup","emmers"],["Sambal","emmers"],
+["Ketjap Manis","stuk"],["Pizza saus","dozen"]]},
+{cat:"Pizza",items:[
+["Blok kaas","stuk"],["Salami","kg"],["Ham","kg"],["Champignons","kratten"],
+["Mozzarella","stuk"],["Gorgonzola","stuk"],["Ananas","dozen"],
+["Tonijn","dozen"],["Artisjok","blikken"],["Zalm","blikken"],
+["Olijven","blikken"],["Jalapenos","blikken"],["Fetakaas","stuk"]]},
+{cat:"Verpakkingsmateriaal",items:[
+["Pizza dozen","stuk"],["Calzone dozen","stuk"],["911 + deksel","aantal"],
+["1 vaks lasagne + deksel","aantal"],["Catering bord rond 13 cm","aantal"],
+["Catering bord rond 17 cm","aantal"],["Catering bord rond 20 cm","aantal"],
+["Catering bord rond 23 cm","aantal"],["Salade bakjes 275 cc","aantal"],
+["Saus bakjes 80 cc","dozen"],["Servetten","dozen"],["Pizza tafels","dozen"]]},
+{cat:"Drinken",items:[
+["Ayran","tray"],["Coca Cola","tray"],["Coca Cola Zero","tray"],
+["Fanta","tray"],["Sprite Zero","tray"],["Red Bull","tray"],
+["Fernandes Geel","tray"],["Fernandes Rood","tray"],["Fernandes Groen","tray"],
+["Fernandes Blauw","tray"],["Spa Blauw","tray"],["AA","dozen"],
+["Mazaa Mango","tray"],["Fristi","tray"],["Chocomel","tray"]]},
+{cat:"Vlees",items:[["Spare ribs","kg"],["Verse kipfilet","kg"]]},
+{cat:"Overig",items:[
+["Baal Uien","stuk"],["Citroen","kg"],["Lollys","stuk"],
+["Witte Wijn","dozen"],["Rode Wijn","dozen"]]}
+];
 
-        <label id="hourRateWrap">
-          <span id="hourRateLabel">Uurloon (€)</span>
-          <input id="hourRate" type="number" step="0.01" min="0" placeholder="10" />
-        </label>
-      </div>
+const STORE="alanya_order_v2_compact";
+const PREV="alanya_prev_v2_compact";
 
-      <div class="row">
-        <button id="saveSettings" class="primary">Opslaan</button>
-        <button id="resetAll" class="danger">Alles wissen</button>
-      </div>
+/* === STATE === */
+const $=id=>document.getElementById(id);
+const state=JSON.parse(localStorage.getItem(STORE)||'{}');
+state.rows=state.rows||{};
+state.date=state.date||new Date().toISOString().slice(0,10);
+$("orderDate").value=state.date;
 
-      <p class="hint" id="settingsHint">
-        Alles wordt lokaal opgeslagen op je iPhone (geen cloud). Maak af en toe een JSON back-up.
-      </p>
-    </section>
+function key(cat,product){ return cat+"__"+product; }
 
-    <!-- Overzicht -->
-    <section class="card">
-      <h2 id="summaryTitle">Overzicht</h2>
-      <div class="stats">
-        <div class="stat">
-          <div class="label" id="earnedLabel">Verdiend</div>
-          <div class="value" id="earnedTotal">€ 0,00</div>
-        </div>
-        <div class="stat">
-          <div class="label" id="paidLabel">Ontvangen</div>
-          <div class="value" id="paidTotal">€ 0,00</div>
-        </div>
-        <div class="stat highlight">
-          <div class="label" id="dueLabel">Nog tegoed</div>
-          <div class="value" id="dueTotal">€ 0,00</div>
-        </div>
-      </div>
-    </section>
+function isFilled(cat,product){
+  const r=state.rows[key(cat,product)];
+  const qty=(r?.qty ?? "").toString().trim();
+  return qty !== "" && qty !== "0";
+}
 
-    <!-- Werkdag toevoegen -->
-    <section class="card">
-      <h2 id="addWorkdayTitle">Werkdag toevoegen</h2>
+function save(){
+  state.date = $("orderDate").value || new Date().toISOString().slice(0,10);
+  localStorage.setItem(STORE, JSON.stringify(state));
+}
 
-      <div class="grid grid-2">
-        <label>
-          <span id="workDateLabel">Datum</span>
-          <input id="workDate" type="date" />
-        </label>
+function buildCSV(){
+  let out="Categorie;Product;Aantal;Eenheid\n";
+  let count=0;
 
-        <label id="shiftWrap">
-          <span id="shiftLabel">Dienst (bij dagloon)</span>
-          <select id="shiftType">
-            <option value="full" id="shiftFull">Hele dienst</option>
-            <option value="half" id="shiftHalf">Halve dienst</option>
-          </select>
-        </label>
+  DATA.forEach(g=>g.items.forEach(([p,defU])=>{
+    const r=state.rows[key(g.cat,p)];
+    const qty=(r?.qty ?? "").toString().trim();
+    if(!qty || qty==="0") return;
+    count++;
+    const unit=r?.unit || defU;
+    out += `${g.cat};${p};${qty};${unit}\n`;
+  }));
 
-        <label>
-          <span id="startLabel">Begin</span>
-          <input id="startTime" type="time" value="13:00" />
-        </label>
+  if(count===0){
+    out += ";;;;\n;(geen items ingevuld);;;\n";
+  }
+  return out;
+}
 
-        <label>
-          <span id="endLabel">Eind</span>
-          <input id="endTime" type="time" value="01:00" />
-        </label>
-      </div>
+function render(){
+  const app=$("app");
+  app.innerHTML="";
 
-      <div class="row">
-        <button id="addWorkday" class="primary">Toevoegen</button>
-      </div>
+  const only = $("onlyFilled").checked;
 
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr id="workdaysHeaderRow"></tr>
-          </thead>
-          <tbody id="workdaysBody"></tbody>
-        </table>
-      </div>
-    </section>
+  DATA.forEach(g=>{
+    const visibleItems = g.items.filter(([p]) => !only || isFilled(g.cat,p));
+    if(visibleItems.length===0) return;
 
-    <!-- Betaling toevoegen -->
-    <section class="card">
-      <h2 id="addPaymentTitle">Betaling toevoegen</h2>
+    const d=document.createElement("details");
+    d.open=true;
 
-      <div class="grid grid-2">
-        <label>
-          <span id="payDateLabel">Datum</span>
-          <input id="payDate" type="date" />
-        </label>
+    const count=g.items.filter(([p])=>isFilled(g.cat,p)).length;
 
-        <label>
-          <span id="payAmountLabel">Bedrag (€)</span>
-          <input id="payAmount" type="number" step="0.01" min="0" placeholder="100" />
-        </label>
-      </div>
+    const s=document.createElement("summary");
+    s.innerHTML = `${g.cat} <span class="badge">${count} ingevuld</span>`;
+    d.appendChild(s);
 
-      <div class="row">
-        <button id="addPayment" class="primary">Toevoegen</button>
-      </div>
+    const wrap=document.createElement("div");
+    wrap.className="tableWrap";
 
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr id="paymentsHeaderRow"></tr>
-          </thead>
-          <tbody id="paymentsBody"></tbody>
-        </table>
-      </div>
-    </section>
+    const t=document.createElement("table");
+    t.innerHTML = `
+      <thead>
+        <tr>
+          <th>Product</th>
+          <th style="width:90px">Aantal</th>
+          <th style="width:130px">Eenheid</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    `;
 
-    <!-- Export / Import -->
-    <section class="card">
-      <h2 id="exportTitle">Export / Import</h2>
+    const tb=t.querySelector("tbody");
 
-      <div class="row">
-        <button id="exportData">Export (JSON)</button>
-        <button id="exportPdf">Export (PDF)</button>
+    visibleItems.forEach(([p,defU])=>{
+      const k=key(g.cat,p);
+      const r=state.rows[k] || { qty:"", unit:defU };
 
-        <label class="file">
-          <span id="importLabel">Import (JSON)</span>
-          <input id="importData" type="file" accept="application/json" />
-        </label>
-      </div>
+      const tr=document.createElement("tr");
 
-      <p class="hint" id="exportHint">
-        PDF export: iPhone toont “Print”. Open de preview (pinch/zoom) → Deel → “Bewaar in Bestanden”.
-      </p>
-    </section>
-  </main>
+      const tdP=document.createElement("td");
+      tdP.className="prod";
+      tdP.textContent=p;
 
-  <script src="app.js"></script>
-  <script>
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("./service-worker.js");
-    }
-  </script>
+      const tdQ=document.createElement("td");
+      tdQ.className="qty";
+      const inp=document.createElement("input");
+      inp.type="number";
+      inp.inputMode="numeric";
+      inp.placeholder="0";
+      inp.className="qtyInput";
+      inp.value = r.qty ?? "";
+      inp.addEventListener("input", ()=>{
+        state.rows[k] = state.rows[k] || {};
+        state.rows[k].qty = inp.value;
+        if(!state.rows[k].unit) state.rows[k].unit = defU;
+        save();
+        if($("onlyFilled").checked) render();
+      });
+      tdQ.appendChild(inp);
+
+      const tdU=document.createElement("td");
+      tdU.className="unit";
+      const sel=document.createElement("select");
+      sel.className="unitSelect";
+
+      // Zorg dat default ook in lijst zit (zekerheid)
+      const set = new Set(UNITS); set.add(defU);
+      [...set].forEach(u=>{
+        const o=document.createElement("option");
+        o.value=u; o.textContent=u;
+        if((r.unit || defU)===u) o.selected=true;
+        sel.appendChild(o);
+      });
+
+      sel.addEventListener("change", ()=>{
+        state.rows[k]=state.rows[k]||{};
+        state.rows[k].unit=sel.value;
+        save();
+      });
+      tdU.appendChild(sel);
+
+      tr.appendChild(tdP);
+      tr.appendChild(tdQ);
+      tr.appendChild(tdU);
+      tb.appendChild(tr);
+    });
+
+    wrap.appendChild(t);
+    d.appendChild(wrap);
+    app.appendChild(d);
+  });
+}
+
+render();
+
+/* === EVENTS === */
+$("orderDate").addEventListener("change", ()=>{ save(); });
+
+$("onlyFilled").addEventListener("change", ()=>{ save(); render(); });
+
+$("expandAll").addEventListener("click", ()=>{
+  document.querySelectorAll("details").forEach(d=>d.open=true);
+});
+
+$("collapseAll").addEventListener("click", ()=>{
+  document.querySelectorAll("details").forEach(d=>d.open=false);
+});
+
+$("clear").addEventListener("click", ()=>{
+  if(!confirm("Alles wissen? (aantallen worden leeg gemaakt)")) return;
+  state.rows={};
+  save();
+  render();
+});
+
+$("restore").addEventListener("click", ()=>{
+  const p = localStorage.getItem(PREV);
+  if(!p){
+    alert("Geen vorige bestelling gevonden. Tip: gebruik eerst een keer 'Versturen via e-mail'.");
+    return;
+  }
+  if(!confirm("Vorige bestelling terugzetten? (huidige invoer wordt overschreven)")) return;
+  const prev = JSON.parse(p);
+  state.rows = prev.rows || {};
+  state.date = prev.date || state.date;
+  $("orderDate").value = state.date;
+  save();
+  render();
+});
+
+$("copyCsv").addEventListener("click", async ()=>{
+  try{
+    await navigator.clipboard.writeText(buildCSV());
+    alert("CSV gekopieerd. Plak in Excel.");
+  }catch{
+    alert("Kopiëren mislukt (iOS kan soms blokkeren). Gebruik dan e-mail en kopieer daaruit.");
+  }
+});
+
+$("sendMail").addEventListener("click", ()=>{
+  save();
+  localStorage.setItem(PREV, JSON.stringify({ rows: state.rows, date: state.date }));
+  const subject = SUBJECT_PREFIX + state.date;
+  const body = "Bestelling Alanya Delfzijl\nBesteldatum: " + state.date + "\n\n" + buildCSV();
+  location.href = `mailto:${encodeURIComponent(EMAIL)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+});
+</script>
+
 </body>
 </html>
-
